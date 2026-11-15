@@ -20,16 +20,19 @@ if [ -f android/app/build.gradle.kts ]; then
   grep -q "$marker" "$gradle" || cat >> "$gradle" <<'KTS'
 
 // almuhra-release-signing
-val almuhraKeyProps = java.util.Properties().apply {
-    load(java.io.FileInputStream(rootProject.file("key.properties")))
-}
+// Plain Kotlin on purpose: inside this script `java` is the Gradle Java
+// extension, so java.util.Properties cannot be referenced without an import.
+val almuhraKeyProps: Map<String, String> = rootProject.file("key.properties")
+    .readLines()
+    .filter { it.contains("=") }
+    .associate { it.substringBefore("=").trim() to it.substringAfter("=").trim() }
 android {
     signingConfigs {
         create("almuhraRelease") {
-            keyAlias = almuhraKeyProps.getProperty("keyAlias")
-            keyPassword = almuhraKeyProps.getProperty("keyPassword")
-            storeFile = file(almuhraKeyProps.getProperty("storeFile"))
-            storePassword = almuhraKeyProps.getProperty("storePassword")
+            keyAlias = almuhraKeyProps.getValue("keyAlias")
+            keyPassword = almuhraKeyProps.getValue("keyPassword")
+            storeFile = file(almuhraKeyProps.getValue("storeFile"))
+            storePassword = almuhraKeyProps.getValue("storePassword")
         }
     }
     buildTypes {
