@@ -42,18 +42,62 @@ class CrosswordState {
 
 /// Owns the grid state, cursor and direction, and applies every play event.
 class CrosswordController extends ChangeNotifier {
-  CrosswordController(this.puzzle)
+  /// [saved] is the output of [toJson] from an earlier run of this puzzle.
+  /// Throws [FormatException] / [ArgumentError] when it does not fit.
+  CrosswordController(this.puzzle, {Map<String, dynamic>? saved})
       : _across = _index(puzzle, Direction.across),
         _down = _index(puzzle, Direction.down) {
     final first = puzzle.entries.first;
+    final cells = {
+      for (final p in puzzle.whiteCells) p: const CellState.empty(),
+    };
+    var cursor = first.start;
+    var dir = first.dir;
+    var helpersUsed = 0;
+
+    if (saved != null) {
+      for (final raw in saved['cells'] as List) {
+        final c = raw as List;
+        final p = Pos(c[0] as int, c[1] as int);
+        final letter = c[2] as String;
+        final status = CellStatus.values.byName(c[3] as String);
+        if (!cells.containsKey(p) ||
+            !arabicAlphabet.contains(letter) ||
+            status == CellStatus.empty) {
+          throw FormatException('bad saved cell: $raw');
+        }
+        cells[p] = CellState(letter, status);
+      }
+      final cur = saved['cursor'] as List;
+      cursor = Pos(cur[0] as int, cur[1] as int);
+      if (!puzzle.isWhite(cursor)) {
+        throw FormatException('bad saved cursor: $cursor');
+      }
+      dir = Direction.values.byName(saved['dir'] as String);
+      helpersUsed = saved['helpers'] as int;
+      if (helpersUsed < 0) throw const FormatException('bad saved helpers');
+    }
+
     _state = CrosswordState(
-      cells: {for (final p in puzzle.whiteCells) p: const CellState.empty()},
-      cursor: first.start,
-      dir: first.dir,
-      helpersUsed: 0,
-      solved: false,
+      cells: cells,
+      cursor: cursor,
+      dir: dir,
+      helpersUsed: helpersUsed,
+      solved: _isSolved(cells),
     );
   }
+
+  /// Player progress (not the puzzle itself) for auto-save.
+  Map<String, dynamic> toJson() => {
+        'cells': [
+          for (final e in _state.cells.entries)
+            if (!e.value.isEmpty)
+              [e.key.row, e.key.col, e.value.letter, e.value.status.name],
+        ],
+        'cursor': [_state.cursor.row, _state.cursor.col],
+        'dir': _state.dir.name,
+        'helpers': _state.helpersUsed,
+      };
 
   final Puzzle puzzle;
 

@@ -17,3 +17,11 @@
 8. Day boundary for the daily puzzle = midnight Asia/Baghdad.
 9. App state: plain ChangeNotifier controller with immutable state (no Riverpod yet —
    no extra dependency needed for the play screen).
+10. Practice mode keeps ONE current game, saved as a JSON string in shared_preferences
+    behind the injectable GameStorage interface (Drift/SQLite deferred until stats need it).
+    Saved on every step, every 5 s while the clock runs, and when the app is paused.
+11. New practice puzzles avoid the words of the last 5 puzzles, capped at 40% of the
+    bank so the generator keeps enough words (bank is still small).
+12. Tapping "new puzzle" on a puzzle in progress asks for confirmation first.
+13. Background generation uses `compute` (isolate on phones, inline on web) instead of
+    Isolate.run, which does not compile for web.

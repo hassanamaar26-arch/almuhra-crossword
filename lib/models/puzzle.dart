@@ -109,6 +109,17 @@ class Entry {
   final List<Pos> cells;
 
   Pos get start => cells.first;
+
+  Map<String, dynamic> toJson() => {
+        'number': number,
+        'dir': dir.name,
+        'row': row,
+        'col': col,
+        'length': length,
+        'clue': clue,
+        if (answer != null) 'answer': answer,
+        if (display != null) 'display': display,
+      };
 }
 
 /// One crossword (JSON v1). Immutable.
@@ -201,6 +212,25 @@ class Puzzle {
   final Map<Pos, String>? solution;
 
   bool get hasSolution => solution != null;
+
+  /// JSON v1 again: full form with a solution, masked client form without.
+  Map<String, dynamic> toJson() => {
+        'version': 1,
+        'id': id,
+        'size': size,
+        'direction': 'rtl',
+        'grid': [
+          for (var r = 0; r < size; r++)
+            [
+              for (var c = 0; c < size; c++)
+                _blocks[r][c] ? '#' : (solution?[Pos(r, c)] ?? '.'),
+            ].join(),
+        ],
+        'numbers': [
+          for (final n in numbers.entries) [n.key.row, n.key.col, n.value],
+        ],
+        'entries': [for (final e in entries) e.toJson()],
+      };
 
   bool inBounds(Pos p) =>
       p.row >= 0 && p.row < size && p.col >= 0 && p.col < size;

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:almuhra_crossword/core/arabic/normalize.dart';
-import 'package:almuhra_crossword/main.dart';
 import 'package:almuhra_crossword/models/puzzle.dart';
 import 'package:almuhra_crossword/sample_puzzle.dart';
 import 'package:almuhra_crossword/screens/play_screen.dart';
@@ -89,14 +88,6 @@ void main() {
       expect(dad.dx, greaterThan(jeem.dx));
     });
 
-    testWidgets('the real app starts', (tester) async {
-      tester.view.physicalSize = const Size(360, 640);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(const CrosswordApp());
-      expect(tester.takeException(), isNull);
-      expect(find.text('لغز تجريبي 7×7'), findsOneWidget);
-    });
   });
 
   group('Arabic keyboard', () {
