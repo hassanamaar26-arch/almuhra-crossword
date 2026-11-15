@@ -93,8 +93,25 @@ void main() {
       expect(textOf(tester, 'victory-helpers'), '1');
       // display spelling, not the grid form (اربيل / شوقي / صين).
       expect(find.text('أربيل'), findsOneWidget);
-      expect(find.text('أحمد شوقي'), findsOneWidget);
-      expect(find.text('الصين'), findsOneWidget);
+      // The word list scrolls inside the dialog and keeps a usable height.
+      final list = find.descendant(
+        of: find.byType(VictoryDialog),
+        matching: find.byType(ListView),
+      );
+      final dialog = tester.getRect(find.byType(Dialog));
+      // ignore: avoid_print
+      print('victory list height: ${tester.getSize(list).height}, '
+          'dialog: ${dialog.height}');
+      expect(tester.getSize(list).height, greaterThan(120));
+      final scrollable = find.descendant(
+        of: list,
+        matching: find.byType(Scrollable),
+      );
+      for (final word in ['الصين', 'أحمد شوقي', 'لندن']) {
+        await tester.scrollUntilVisible(find.text(word), 60,
+            scrollable: scrollable);
+        expect(find.text(word), findsOneWidget);
+      }
 
       await tester.tap(find.text('لغز جديد'));
       await tester.pumpAndSettle();
