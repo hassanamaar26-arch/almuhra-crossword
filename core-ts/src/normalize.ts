@@ -1,11 +1,11 @@
 // Arabic normalization rules — must stay identical to lib/core/arabic/normalize.dart
 // See ASSUMPTIONS.md #4.
 
-/** On-screen keyboard letters (31). Order = keyboard order is decided in UI. */
+/** On-screen keyboard letters (30). Order = keyboard order is decided in UI. */
 export const ALPHABET: readonly string[] = [
   'ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص',
   'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي',
-  'ء', 'ة', 'ى',
+  'ء', 'ى',
 ];
 
 const ALPHABET_SET = new Set(ALPHABET);
@@ -14,7 +14,7 @@ export const MAX_LEN = 10;
 
 const MAP: Record<string, string> = {
   'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا',
-  'ؤ': 'و', 'ئ': 'ي',
+  'ؤ': 'و', 'ئ': 'ي', 'ة': 'ه',
 };
 
 // Tashkeel U+064B..U+065F, superscript alef U+0670, tatweel U+0640, whitespace.

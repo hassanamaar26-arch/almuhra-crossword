@@ -45,7 +45,7 @@ connectivity (Iraq) — the game must stay playable offline.
 ### F3 — Play screen (classic)
 - Grid right-to-left; across clues read right→left, down clues top→bottom.
 - Tap cell → select word; tap again → toggle direction.
-- Custom Arabic on-screen keyboard (28 letters + ة + ى + delete);
+- Custom Arabic on-screen keyboard (28 letters + ء + ى + delete);
   no system keyboard.
 - Clue bar above keyboard; full clue list (أفقي / عمودي) in a sheet.
 - Helpers: check letter, check word, reveal letter (limited per puzzle).
@@ -106,7 +106,7 @@ push notifications, other languages, English UI.
 
 ## 7. Arabic text rules (must-handle)
 - Normalization for grid letters: `أ إ آ ٱ → ا`, strip tashkeel and tatweel.
-- `ة` and `ى` kept as distinct letters (shown on keyboard).
+- `ة → ه` in the grid; `ء` and `ى` kept as distinct letters (shown on keyboard).
 - Words without the definite article «ال» unless it is part of the name.
 - Grid shows isolated letter forms; clue text shows the full display word only after solving.
 

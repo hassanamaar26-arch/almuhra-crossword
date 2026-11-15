@@ -11,9 +11,9 @@ test('hamza on waw / ya becomes waw / ya', () => {
   assert.equal(normalize('رئيس'), 'رييس');
 });
 
-test('standalone hamza, ta marbuta and alef maqsura are kept', () => {
+test('ta marbuta becomes ha; standalone hamza and alef maqsura are kept', () => {
   assert.equal(normalize('سماء'), 'سماء');
-  assert.equal(normalize('دجلة'), 'دجلة');
+  assert.equal(normalize('دجلة'), 'دجله');
   assert.equal(normalize('مصطفى'), 'مصطفى');
 });
 
@@ -27,9 +27,9 @@ test('toLetters splits into single code points', () => {
   assert.deepEqual(toLetters('نيل'), ['ن', 'ي', 'ل']);
 });
 
-test('alphabet has 31 keys and every letter is one code point', () => {
-  assert.equal(ALPHABET.length, 31);
-  assert.equal(new Set(ALPHABET).size, 31);
+test('alphabet has 30 keys and every letter is one code point', () => {
+  assert.equal(ALPHABET.length, 30);
+  assert.equal(new Set(ALPHABET).size, 30);
   for (const l of ALPHABET) assert.equal([...l].length, 1);
 });
 
