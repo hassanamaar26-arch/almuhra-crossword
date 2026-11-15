@@ -49,6 +49,9 @@ Finder inGrid(String text) => find.descendant(
       matching: find.text(text),
     );
 
+String textOf(WidgetTester tester, String key) =>
+    tester.widget<Text>(find.byKey(ValueKey(key))).data!;
+
 String timerText(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const ValueKey('timer'))).data!;
 
@@ -86,14 +89,14 @@ void main() {
 
       expect(find.byType(VictoryDialog), findsOneWidget);
       expect(find.text('أحسنت!'), findsOneWidget);
-      expect(find.text('الوقت: 02:05'), findsOneWidget);
-      expect(find.text('المساعدات: 1'), findsOneWidget);
+      expect(textOf(tester, 'victory-time'), '02:05');
+      expect(textOf(tester, 'victory-helpers'), '1');
       // display spelling, not the grid form (اربيل / شوقي / صين).
       expect(find.text('أربيل'), findsOneWidget);
       expect(find.text('أحمد شوقي'), findsOneWidget);
       expect(find.text('الصين'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'لغز جديد'));
+      await tester.tap(find.text('لغز جديد'));
       await tester.pumpAndSettle();
       expect(find.byType(VictoryDialog), findsNothing);
       expect(asked, [7]);
@@ -104,6 +107,7 @@ void main() {
       await pumpPlay(tester, c, elapsed: ValueNotifier(Duration.zero));
       solveAll(c);
       await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.emoji_events), findsOneWidget);
       await tester.tap(find.text('إغلاق'));
       await tester.pumpAndSettle();
       expect(find.byType(VictoryDialog), findsNothing);

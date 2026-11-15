@@ -1,7 +1,7 @@
 name: almuhra_crossword
 description: "الكلمات المتقاطعة (المُهرة)"
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -21,3 +21,13 @@ flutter:
   uses-material-design: true
   assets:
     - words/bank_v1.json
+    - assets/fonts/OFL.txt
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Cairo-ExtraBold.ttf
+          weight: 800

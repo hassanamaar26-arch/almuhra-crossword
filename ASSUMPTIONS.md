@@ -29,3 +29,13 @@
     never revealed by their own clue; checked by core-ts/test/bank.test.ts and
     test/bank_test.dart. The two 8-letter answers of batch 1 (ids 65, 94) were removed.
     New category «فن» (music and arts).
+15. UI (2026-11-15 redesign): colors live in lib/theme.dart (CrosswordPalette, dark slate /
+    light paper); font Cairo (OFL, bundled in assets/fonts). The letter "pop" uses a
+    ScaleTransition driven by an AnimationController, not a timer, so nothing stays pending.
+16. "مشاركة النتيجة" copies the result text to the clipboard (no share-sheet plugin).
+17. Release signing: keystore and passwords come only from repository secrets
+    (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD); nothing secret is in the
+    repo. tool/android_setup.sh patches the generated android/ folder in CI. Without the
+    secrets the build still works but uses the temporary debug key.
+18. Web: .github/workflows/pages.yml deploys to GitHub Pages (needs Pages source =
+    "GitHub Actions" once). test/web_parity_test.dart runs in Chrome in CI.

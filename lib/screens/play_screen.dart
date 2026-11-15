@@ -8,6 +8,7 @@ import '../state/crossword_controller.dart';
 import '../widgets/arabic_keyboard.dart';
 import '../widgets/clue_bar.dart';
 import '../widgets/clues_sheet.dart';
+import '../theme.dart';
 import '../widgets/crossword_grid.dart';
 import '../widgets/victory_dialog.dart';
 
@@ -91,7 +92,7 @@ class _PlayScreenState extends State<PlayScreen> {
         puzzle: _c.puzzle,
         helpersUsed: _c.state.helpersUsed,
         elapsed: widget.elapsed?.value,
-        onCopyResult: share == null
+        onShareResult: share == null
             ? null
             : () => Clipboard.setData(ClipboardData(text: share())),
         onNewPuzzle: onNew == null
@@ -172,6 +173,7 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   Widget build(BuildContext context) {
     final elapsed = widget.elapsed;
+    final pal = CrosswordPalette.of(Theme.of(context).brightness);
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -179,31 +181,48 @@ class _PlayScreenState extends State<PlayScreen> {
         actions: [
           if (elapsed != null)
             Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: ValueListenableBuilder<Duration>(
-                  valueListenable: elapsed,
-                  builder: (context, value, child) => Text(
-                    formatDuration(value),
-                    key: const ValueKey('timer'),
-                    textDirection: TextDirection.ltr,
-                    textScaler: TextScaler.noScaling,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontFeatures: [FontFeature.tabularFigures()],
+              child: Container(
+                margin: const EdgeInsetsDirectional.only(end: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: pal.board,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.timer_outlined, size: 16, color: pal.muted),
+                    const SizedBox(width: 4),
+                    ValueListenableBuilder<Duration>(
+                      valueListenable: elapsed,
+                      builder: (context, value, child) => Text(
+                        formatDuration(value),
+                        key: const ValueKey('timer'),
+                        textDirection: TextDirection.ltr,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.2,
+                          fontWeight: FontWeight.w700,
+                          color: pal.letter,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           IconButton(
             tooltip: 'قائمة التلميحات',
-            icon: const Icon(Icons.format_list_numbered_rtl),
+            padding: EdgeInsets.zero,
+            icon: const RoundIcon(Icons.format_list_numbered_rtl),
             onPressed: () => showCluesSheet(context, _c),
           ),
           PopupMenuButton<_Help>(
             tooltip: 'مساعدة',
-            icon: const Icon(Icons.lightbulb_outline),
+            padding: EdgeInsets.zero,
+            icon: const RoundIcon(Icons.lightbulb_outline),
             onSelected: _onHelp,
             itemBuilder: (_) => const [
               PopupMenuItem(
@@ -220,10 +239,12 @@ class _PlayScreenState extends State<PlayScreen> {
               ),
             ],
           ),
+          if (widget.onNewPuzzle == null) const SizedBox(width: 6),
           if (widget.onNewPuzzle != null)
             PopupMenuButton<int>(
               tooltip: 'لغز جديد',
-              icon: const Icon(Icons.add_box_outlined),
+              padding: EdgeInsets.zero,
+              icon: const RoundIcon(Icons.add),
               onSelected: _requestNewPuzzle,
               itemBuilder: (_) => [
                 for (final size in supportedSizes)
@@ -247,7 +268,7 @@ class _PlayScreenState extends State<PlayScreen> {
                   Expanded(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
                         child: CrosswordGrid(controller: _c),
                       ),
                     ),

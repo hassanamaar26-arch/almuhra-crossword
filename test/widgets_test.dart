@@ -118,7 +118,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('key-toggle')));
       await tester.pump();
       expect(c.state.dir, Direction.down);
-      expect(find.text('1 · عمودي'), findsOneWidget);
+      expect(find.text('1 عمودي'), findsOneWidget);
     });
 
     testWidgets('typing a whole word with the keyboard', (tester) async {
@@ -137,7 +137,7 @@ void main() {
     testWidgets('shows number, direction and clue of the current word',
         (tester) async {
       await pumpPlay(tester, newController());
-      expect(find.text('3 · أفقي'), findsOneWidget);
+      expect(find.text('3 أفقي'), findsOneWidget);
       expect(find.text('زهر يُهدى رمزاً للمحبة'), findsOneWidget);
     });
 
@@ -146,14 +146,14 @@ void main() {
       await pumpPlay(tester, c);
       await tester.tap(find.byKey(const ValueKey('clue-next')));
       await tester.pump();
-      expect(find.text('5 · أفقي'), findsOneWidget);
+      expect(find.text('5 أفقي'), findsOneWidget);
       expect(find.text('مركز إقليم كردستان العراق'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('clue-prev')));
       await tester.pump();
-      expect(find.text('3 · أفقي'), findsOneWidget);
+      expect(find.text('3 أفقي'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('clue-prev')));
       await tester.pump();
-      expect(find.text('6 · عمودي'), findsOneWidget);
+      expect(find.text('6 عمودي'), findsOneWidget);
     });
 
     testWidgets('tapping the clue text toggles direction', (tester) async {
@@ -162,7 +162,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('clue-text')));
       await tester.pump();
       expect(c.state.dir, Direction.down);
-      expect(find.text('1 · عمودي'), findsOneWidget);
+      expect(find.text('1 عمودي'), findsOneWidget);
       expect(find.text('أمير الشعراء'), findsOneWidget);
     });
 
@@ -171,7 +171,7 @@ void main() {
       await pumpPlay(tester, c);
       c.selectCell(const Pos(6, 4));
       await tester.pump();
-      expect(find.text('8 · أفقي'), findsOneWidget);
+      expect(find.text('8 أفقي'), findsOneWidget);
       expect(find.text('بلد تاج محل'), findsOneWidget);
     });
   });
@@ -195,7 +195,7 @@ void main() {
       expect(find.byType(CluesSheet), findsNothing);
       expect(c.state.cursor, const Pos(3, 5));
       expect(c.state.dir, Direction.down);
-      expect(find.text('6 · عمودي'), findsOneWidget);
+      expect(find.text('6 عمودي'), findsOneWidget);
     });
 
     testWidgets('completed words are marked; tapping one goes to its start',

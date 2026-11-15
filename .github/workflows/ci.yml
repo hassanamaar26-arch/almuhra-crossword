@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -36,9 +41,37 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
-      - run: flutter build apk --release
-      - name: Name the APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk almuhra-crossword.apk
+      - name: Generator parity in a browser
+        run: flutter test --platform chrome test/web_parity_test.dart
+      - name: Release signing key (from repository secrets)
+        id: signing
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/almuhra-release.jks
+            {
+              echo "storeFile=almuhra-release.jks"
+              echo "storePassword=$KEYSTORE_PASSWORD"
+              echo "keyAlias=$KEY_ALIAS"
+              echo "keyPassword=$KEY_PASSWORD"
+            } > android/key.properties
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Signing secrets are missing: this APK is signed with a temporary debug key and cannot update an installed copy."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - run: bash tool/android_setup.sh
+      - name: Build release APK
+        run: >
+          flutter build apk --release
+          --build-number=${{ github.run_number }}
+          --build-name=0.2.${{ github.run_number }}
+      - name: Name the APK and print its signing certificate
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk almuhra-crossword.apk
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs almuhra-crossword.apk | grep -E "SHA-256|DN"
+      - name: Web build compiles
+        run: flutter build web --release --base-href /almuhra-crossword/
       - uses: actions/upload-artifact@v4
         with:
           name: almuhra-crossword-apk
@@ -48,7 +81,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: "نسخة تجريبية ${{ github.run_number }}"
-          body: "نسخة تجريبية تُبنى تلقائياً من آخر تحديث. نزّل الملف almuhra-crossword.apk ونصّبه."
+          name: "نسخة ${{ github.run_number }}"
+          body: |
+            الإصدار 0.2.${{ github.run_number }} — يُبنى تلقائياً من آخر تحديث.
+            نزّل الملف almuhra-crossword.apk ونصّبه.
+            موقّعة بالمفتاح الثابت: ${{ steps.signing.outputs.signed }}
           files: almuhra-crossword.apk
           make_latest: true

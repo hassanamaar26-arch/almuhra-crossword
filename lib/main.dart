@@ -5,6 +5,7 @@ import 'core/generator/word_bank.dart';
 import 'screens/home_screen.dart';
 import 'state/app_controller.dart';
 import 'storage/game_storage.dart';
+import 'theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,11 +106,8 @@ class _CrosswordAppState extends State<CrosswordApp>
       title: 'الكلمات المتقاطعة (المُهرة)',
       debugShowCheckedModeBanner: false,
       themeMode: mode,
-      theme: ThemeData(colorSchemeSeed: const Color(0xFFB8811A)),
-      darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFFB8811A),
-        brightness: Brightness.dark,
-      ),
+      theme: buildAppTheme(Brightness.light),
+      darkTheme: buildAppTheme(Brightness.dark),
       builder: (context, child) =>
           Directionality(textDirection: TextDirection.rtl, child: child!),
       home: home,

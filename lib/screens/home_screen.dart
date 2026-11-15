@@ -6,13 +6,13 @@ import '../core/generator/generator.dart' show supportedSizes;
 import '../state/app_controller.dart';
 import '../state/daily_session.dart';
 import '../state/game_session.dart';
-import '../widgets/crossword_grid.dart';
+import '../theme.dart';
 import '../widgets/stats_sheet.dart';
 import 'daily_screen.dart';
 import 'practice_screen.dart';
 
 const Map<int, String> _sizeLabels = {7: 'سهل', 9: 'متوسط', 11: 'صعب'};
-const Color _ink = Color(0xFF1F2A30);
+const Color _ink = Color(0xFF0F172A);
 
 /// First screen: today's puzzle, practice mode, stats and the theme switch.
 class HomeScreen extends StatefulWidget {
@@ -92,13 +92,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
-                    _header(context),
-                    const SizedBox(height: 12),
-                    _BrandTiles(palette: pal),
+                    _header(pal),
                     const SizedBox(height: 20),
-                    _dailyCard(context, pal),
-                    const SizedBox(height: 24),
-                    _practiceSection(context),
+                    _dailyCard(pal),
+                    const SizedBox(height: 26),
+                    _practiceSection(pal),
                   ],
                 ),
               ),
@@ -109,46 +107,66 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _header(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _header(CrosswordPalette pal) {
     final mode = _app.settings.themeMode;
     final (icon, label) = switch (mode) {
       ThemeMode.system => (Icons.brightness_auto, 'تلقائي'),
       ThemeMode.light => (Icons.light_mode, 'فاتح'),
       ThemeMode.dark => (Icons.dark_mode, 'داكن'),
     };
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'المُهرة',
-                style: theme.textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'المُهرة',
+                    style: TextStyle(
+                      fontSize: 36,
+                      height: 1.25,
+                      fontWeight: FontWeight.w800,
+                      color: pal.letter,
+                    ),
+                  ),
+                  Text(
+                    'الكلمات المتقاطعة',
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.3,
+                      fontWeight: FontWeight.w700,
+                      color: pal.muted,
+                    ),
+                  ),
+                ],
               ),
-              Text('الكلمات المتقاطعة', style: theme.textTheme.titleMedium),
-            ],
-          ),
+            ),
+            IconButton(
+              tooltip: 'الإحصائيات',
+              padding: EdgeInsets.zero,
+              icon: const RoundIcon(Icons.bar_chart, size: 42),
+              onPressed: () =>
+                  showStatsSheet(context, _app.stats.stats, _app.today),
+            ),
+            IconButton(
+              key: const ValueKey('theme-toggle'),
+              tooltip: 'المظهر: $label',
+              padding: EdgeInsets.zero,
+              icon: RoundIcon(icon, size: 42),
+              onPressed: _app.settings.cycleThemeMode,
+            ),
+          ],
         ),
-        IconButton(
-          tooltip: 'الإحصائيات',
-          icon: const Icon(Icons.bar_chart),
-          onPressed: () =>
-              showStatsSheet(context, _app.stats.stats, _app.today),
-        ),
-        IconButton(
-          key: const ValueKey('theme-toggle'),
-          tooltip: 'المظهر: $label',
-          icon: Icon(icon),
-          onPressed: _app.settings.cycleThemeMode,
-        ),
+        const SizedBox(height: 12),
+        _BrandTiles(palette: pal),
       ],
     );
   }
 
-  Widget _dailyCard(BuildContext context, CrosswordPalette pal) {
+  Widget _dailyCard(CrosswordPalette pal) {
     final DailySession daily = _app.daily;
     final solved = daily.isSolved;
     final streak = _app.stats.stats.streakOn(_app.today);
@@ -160,78 +178,131 @@ class _HomeScreenState extends State<HomeScreen> {
     const text = TextStyle(color: _ink);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: pal.active,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [Color(0xFFFCD34D), Color(0xFFF59E0B), Color(0xFFD97706)],
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x59F59E0B),
+            blurRadius: 22,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'لغز اليوم',
-                  style: text.copyWith(fontSize: 22, fontWeight: FontWeight.w800),
-                ),
-              ),
-              Semantics(
-                label: 'سلسلة الأيام المتتالية',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+          const PositionedDirectional(
+            end: -18,
+            bottom: -22,
+            child: ExcludeSemantics(
+              child: Icon(Icons.grid_on, size: 132, color: Color(0x1F0F172A)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    const Icon(Icons.local_fire_department, color: _ink),
-                    const SizedBox(width: 2),
-                    Text(
-                      '$streak',
-                      key: const ValueKey('streak'),
-                      style: text.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        'لغز اليوم',
+                        style: text.copyWith(
+                          fontSize: 26,
+                          height: 1.25,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Semantics(
+                      label: 'سلسلة الأيام المتتالية',
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0x260F172A),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department,
+                              color: _ink,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '$streak',
+                              key: const ValueKey('streak'),
+                              style: text.copyWith(
+                                fontSize: 18,
+                                height: 1.2,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(formatArabicDate(daily.date), style: text.copyWith(fontSize: 15)),
-          Text(
-            'اللغز رقم ${dailyNumber(daily.date)} · '
-            '${DailySession.gridSize}×${DailySession.gridSize}',
-            style: text.copyWith(fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          if (solved)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: _ink, size: 20),
-                  const SizedBox(width: 6),
-                  Text(
-                    'مكتمل · ${formatDuration(daily.elapsed.value)}',
-                    key: const ValueKey('daily-done'),
-                    style: text.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                const SizedBox(height: 2),
+                Text(
+                  formatArabicDate(daily.date),
+                  style: text.copyWith(
+                    fontSize: 15,
+                    height: 1.4,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  'اللغز رقم ${dailyNumber(daily.date)} · '
+                  '${DailySession.gridSize}×${DailySession.gridSize}',
+                  style: text.copyWith(fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 14),
+                if (solved)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: _ink, size: 22),
+                        const SizedBox(width: 6),
+                        Text(
+                          'مكتمل · ${formatDuration(daily.elapsed.value)}',
+                          key: const ValueKey('daily-done'),
+                          style: text.copyWith(
+                            fontSize: 17,
+                            height: 1.3,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              key: const ValueKey('daily-button'),
-              style: FilledButton.styleFrom(
-                backgroundColor: _ink,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: _openDaily,
-              child: Text(label),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const ValueKey('daily-button'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _ink,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 50),
+                    ),
+                    onPressed: _openDaily,
+                    child: Text(label),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -239,23 +310,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _practiceSection(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _practiceSection(CrosswordPalette pal) {
     final practice = _app.practice;
     final c = practice.controller;
     final open = c != null && !practice.isSolved;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('وضع التدريب', style: theme.textTheme.titleLarge),
-        const SizedBox(height: 4),
+        Text(
+          'وضع التدريب',
+          style: TextStyle(
+            fontSize: 22,
+            height: 1.3,
+            fontWeight: FontWeight.w800,
+            color: pal.letter,
+          ),
+        ),
         Text(
           'ألغاز بلا نهاية، بدون إنترنت. اختر حجم الشبكة:',
-          style: theme.textTheme.bodyMedium,
+          style: TextStyle(fontSize: 14, height: 1.5, color: pal.muted),
         ),
         const SizedBox(height: 12),
         if (open) ...[
-          FilledButton.tonal(
+          FilledButton(
             key: const ValueKey('practice-continue'),
             onPressed: _continuePractice,
             child: Text(
@@ -263,32 +340,19 @@ class _HomeScreenState extends State<HomeScreen> {
               '${formatDuration(practice.elapsed.value)}',
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
         ],
         Row(
           children: [
             for (final size in supportedSizes) ...[
-              if (size != supportedSizes.first) const SizedBox(width: 8),
+              if (size != supportedSizes.first) const SizedBox(width: 10),
               Expanded(
-                child: OutlinedButton(
+                child: _SizeTile(
                   key: ValueKey('practice-$size'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () => _newPractice(size),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$size×$size',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(_sizeLabels[size]!),
-                    ],
-                  ),
+                  size: size,
+                  label: _sizeLabels[size]!,
+                  palette: pal,
+                  onTap: () => _newPractice(size),
                 ),
               ),
             ],
@@ -299,7 +363,73 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// The app name written as a row of crossword cells.
+/// A grid-size choice, drawn as a raised tile.
+class _SizeTile extends StatelessWidget {
+  const _SizeTile({
+    super.key,
+    required this.size,
+    required this.label,
+    required this.palette,
+    required this.onTap,
+  });
+
+  final int size;
+  final String label;
+  final CrosswordPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: palette.cellShadow, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Material(
+        color: palette.card,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: palette.cardBorder),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$size×$size',
+                  textDirection: TextDirection.ltr,
+                  style: TextStyle(
+                    fontSize: 20,
+                    height: 1.2,
+                    fontWeight: FontWeight.w800,
+                    color: palette.letter,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    fontWeight: FontWeight.w700,
+                    color: palette.accent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The app name written as a row of raised crossword tiles.
 class _BrandTiles extends StatelessWidget {
   const _BrandTiles({required this.palette});
   final CrosswordPalette palette;
@@ -314,21 +444,26 @@ class _BrandTiles extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              margin: const EdgeInsetsDirectional.only(end: 3),
+              margin: const EdgeInsetsDirectional.only(end: 5, bottom: 3),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: i == 2 ? palette.active : palette.cell,
-                border: Border.all(color: palette.block, width: 1.5),
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: i == 2 ? const Color(0xFFB45309) : palette.cellShadow,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Text(
                 letters[i],
                 textScaler: TextScaler.noScaling,
                 style: TextStyle(
                   fontSize: 22,
-                  height: 1.1,
-                  fontWeight: FontWeight.w700,
-                  color: palette.letter,
+                  height: 1.15,
+                  fontWeight: FontWeight.w800,
+                  color: i == 2 ? palette.activeLetter : palette.letter,
                 ),
               ),
             ),

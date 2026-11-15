@@ -61,7 +61,9 @@ void main() {
 
   /// Fill every cell once: tap it in the grid, then tap its letter key.
   Future<void> solveOnScreen(WidgetTester tester, Puzzle puzzle) async {
-    final grid = tester.getRect(find.byType(CrosswordGrid));
+    final grid = tester
+        .getRect(find.byType(CrosswordGrid))
+        .deflate(CrosswordGrid.boardPadding);
     final cell = grid.width / puzzle.size;
     for (final p in puzzle.whiteCells.toList()) {
       // RTL: logical column 0 is the right-most column.
@@ -166,13 +168,14 @@ void main() {
     await solveOnScreen(tester, savedPuzzle(store, dailySlot('2026-11-15')));
 
     expect(find.byType(VictoryDialog), findsOneWidget);
-    expect(find.text('الوقت: 00:20'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'لغز جديد'), findsNothing);
+    expect(textOf(tester, 'victory-time'), '00:20');
+    expect(textOf(tester, 'victory-helpers'), '0');
+    expect(find.text('لغز جديد'), findsNothing);
 
-    await tester.tap(find.text('نسخ النتيجة'));
+    await tester.tap(find.text('مشاركة النتيجة'));
     await tester.pump();
     await tester.pump();
-    expect(find.text('تم النسخ'), findsOneWidget);
+    expect(find.text('تم النسخ، الصقها لأصدقائك'), findsOneWidget);
     expect(copied.length, 1);
     final lines = copied.single.split('\n');
     expect(lines[1], 'لغز اليوم #1 · 2026-11-15');

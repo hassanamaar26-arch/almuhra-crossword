@@ -4,75 +4,17 @@ import 'package:flutter/material.dart';
 
 import '../models/puzzle.dart';
 import '../state/crossword_controller.dart';
+import '../theme.dart';
 
-/// Colors of the grid, with a light and a dark set.
-@immutable
-class CrosswordPalette {
-  const CrosswordPalette({
-    required this.block,
-    required this.cell,
-    required this.active,
-    required this.word,
-    required this.correct,
-    required this.wrong,
-    required this.revealed,
-    required this.letter,
-    required this.letterCorrect,
-    required this.letterWrong,
-    required this.letterRevealed,
-    required this.number,
-    required this.key,
-    required this.keyControl,
-  });
-
-  static const light = CrosswordPalette(
-    block: Color(0xFF1F2A30),
-    cell: Color(0xFFFFFFFF),
-    active: Color(0xFFF2B33D),
-    word: Color(0xFFFBEBC4),
-    correct: Color(0xFFDDF0DF),
-    wrong: Color(0xFFF9DEDC),
-    revealed: Color(0xFFDCE8F2),
-    letter: Color(0xFF1F2A30),
-    letterCorrect: Color(0xFF1E6B33),
-    letterWrong: Color(0xFFA1261D),
-    letterRevealed: Color(0xFF1F5A8A),
-    number: Color(0xFF5B666C),
-    key: Color(0xFFE7ECEF),
-    keyControl: Color(0xFFCFD8DC),
-  );
-
-  static const dark = CrosswordPalette(
-    block: Color(0xFF0C1114),
-    cell: Color(0xFF263238),
-    active: Color(0xFFB8811A),
-    word: Color(0xFF4A3F22),
-    correct: Color(0xFF1F3D27),
-    wrong: Color(0xFF4A2320),
-    revealed: Color(0xFF1F3547),
-    letter: Color(0xFFF1F3F4),
-    letterCorrect: Color(0xFF8FD69F),
-    letterWrong: Color(0xFFF2A39C),
-    letterRevealed: Color(0xFF9CC7EC),
-    number: Color(0xFFA9B4BA),
-    key: Color(0xFF37464E),
-    keyControl: Color(0xFF2A363C),
-  );
-
-  static CrosswordPalette of(Brightness b) =>
-      b == Brightness.dark ? dark : light;
-
-  final Color block, cell, active, word, correct, wrong, revealed;
-  final Color letter, letterCorrect, letterWrong, letterRevealed, number;
-
-  /// Keyboard: letter keys and control keys (delete, direction).
-  final Color key, keyControl;
-}
+export '../theme.dart' show CrosswordPalette;
 
 /// The crossword board. Always laid out RTL: logical column 0 is drawn on
 /// the right, so across words read right → left.
 class CrosswordGrid extends StatelessWidget {
   const CrosswordGrid({super.key, required this.controller, this.palette});
+
+  /// Space between the board edge and the outer tiles.
+  static const double boardPadding = 8;
 
   final CrosswordController controller;
   final CrosswordPalette? palette;
@@ -91,8 +33,18 @@ class CrosswordGrid extends StatelessWidget {
           child: AspectRatio(
             aspectRatio: 1,
             child: Container(
-              color: pal.block,
-              padding: const EdgeInsets.all(1.5),
+              padding: const EdgeInsets.all(boardPadding),
+              decoration: BoxDecoration(
+                color: pal.board,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: pal.boardShadow,
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Column(
                 children: [
                   for (var r = 0; r < puzzle.size; r++)
@@ -122,7 +74,7 @@ class CrosswordGrid extends StatelessWidget {
     Set<Pos> wordCells,
     CrosswordPalette pal,
   ) {
-    if (!controller.puzzle.isWhite(p)) return const SizedBox.expand();
+    if (!controller.puzzle.isWhite(p)) return _BlockTile(color: pal.block);
     return _WhiteCell(
       key: ValueKey(p),
       cell: state.cells[p]!,
@@ -135,7 +87,27 @@ class CrosswordGrid extends StatelessWidget {
   }
 }
 
-class _WhiteCell extends StatelessWidget {
+const double _tileGap = 1.5;
+const double _tileRadius = 6;
+
+/// A black square: a sunken tile, not an empty hole.
+class _BlockTile extends StatelessWidget {
+  const _BlockTile({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(_tileGap),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(_tileRadius),
+      ),
+    );
+  }
+}
+
+class _WhiteCell extends StatefulWidget {
   const _WhiteCell({
     super.key,
     required this.cell,
@@ -153,37 +125,79 @@ class _WhiteCell extends StatelessWidget {
   final CrosswordPalette palette;
   final VoidCallback onTap;
 
+  @override
+  State<_WhiteCell> createState() => _WhiteCellState();
+}
+
+class _WhiteCellState extends State<_WhiteCell>
+    with SingleTickerProviderStateMixin {
+  // A short "pop" when a new letter lands in the cell.
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 180),
+  );
+  late final Animation<double> _scale = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(begin: 1.0, end: 1.18)
+          .chain(CurveTween(curve: Curves.easeOut)),
+      weight: 40,
+    ),
+    TweenSequenceItem(
+      tween: Tween(begin: 1.18, end: 1.0)
+          .chain(CurveTween(curve: Curves.easeIn)),
+      weight: 60,
+    ),
+  ]).animate(_pulse);
+
+  @override
+  void didUpdateWidget(_WhiteCell old) {
+    super.didUpdateWidget(old);
+    final letter = widget.cell.letter;
+    if (letter.isNotEmpty && letter != old.cell.letter) {
+      _pulse.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  CrosswordPalette get _pal => widget.palette;
+
   Color get _background {
-    if (active) return palette.active;
-    switch (cell.status) {
+    if (widget.active) return _pal.active;
+    switch (widget.cell.status) {
       case CellStatus.correct:
-        return palette.correct;
+        return _pal.correct;
       case CellStatus.wrong:
-        return palette.wrong;
+        return _pal.wrong;
       case CellStatus.revealed:
-        return palette.revealed;
+        return _pal.revealed;
       case CellStatus.empty:
       case CellStatus.filled:
-        return inWord ? palette.word : palette.cell;
+        return widget.inWord ? _pal.word : _pal.cell;
     }
   }
 
   Color get _letterColor {
-    if (active) return palette.letter;
-    switch (cell.status) {
+    if (widget.active) return _pal.activeLetter;
+    switch (widget.cell.status) {
       case CellStatus.correct:
-        return palette.letterCorrect;
+        return _pal.letterCorrect;
       case CellStatus.wrong:
-        return palette.letterWrong;
+        return _pal.letterWrong;
       case CellStatus.revealed:
-        return palette.letterRevealed;
+        return _pal.letterRevealed;
       case CellStatus.empty:
       case CellStatus.filled:
-        return palette.letter;
+        return _pal.letter;
     }
   }
 
   String get _semantics {
+    final cell = widget.cell;
     final status = switch (cell.status) {
       CellStatus.empty => 'فارغ',
       CellStatus.filled => cell.letter,
@@ -191,53 +205,70 @@ class _WhiteCell extends StatelessWidget {
       CellStatus.wrong => '${cell.letter}، خطأ',
       CellStatus.revealed => '${cell.letter}، مكشوف',
     };
-    return number == null ? status : 'مربع $number، $status';
+    return widget.number == null ? status : 'مربع ${widget.number}، $status';
   }
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      selected: active,
+      selected: widget.active,
       label: _semantics,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
+        onTap: widget.onTap,
         child: LayoutBuilder(
           builder: (context, box) {
             final side = math.min(box.maxWidth, box.maxHeight);
-            return Container(
-              margin: const EdgeInsets.all(1),
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: const EdgeInsets.all(_tileGap),
               decoration: BoxDecoration(
                 color: _background,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(_tileRadius),
+                border: Border.all(
+                  color: widget.active
+                      ? _pal.activeBorder
+                      : const Color(0x00000000),
+                  width: 1.5,
+                ),
+                // Solid lower edge: the tile looks raised from the board.
+                boxShadow: [
+                  BoxShadow(color: _pal.cellShadow, offset: const Offset(0, 2)),
+                ],
               ),
               child: Stack(
                 children: [
-                  if (number != null)
+                  if (widget.number != null)
                     PositionedDirectional(
-                      top: 1,
-                      start: 3,
+                      top: 0,
+                      start: 2,
                       child: Text(
-                        '$number',
+                        '${widget.number}',
                         textScaler: TextScaler.noScaling,
                         style: TextStyle(
                           fontSize: math.max(side * 0.24, 8),
                           height: 1,
-                          color: palette.number,
+                          fontWeight: FontWeight.w700,
+                          color: widget.active
+                              ? _pal.activeLetter
+                              : _pal.number,
                         ),
                       ),
                     ),
                   Center(
-                    child: Text(
-                      cell.letter,
-                      textScaler: TextScaler.noScaling,
-                      style: TextStyle(
-                        fontSize: side * 0.56,
-                        height: 1.1,
-                        fontWeight: FontWeight.w600,
-                        color: _letterColor,
+                    child: ScaleTransition(
+                      scale: _scale,
+                      child: Text(
+                        widget.cell.letter,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(
+                          fontSize: side * 0.54,
+                          height: 1.15,
+                          fontWeight: FontWeight.w800,
+                          color: _letterColor,
+                        ),
                       ),
                     ),
                   ),

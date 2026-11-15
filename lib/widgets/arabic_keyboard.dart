@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../state/crossword_controller.dart';
-import 'crossword_grid.dart';
+import '../theme.dart';
 
 /// The 30 letters of [arabicAlphabet] in three rows, in reading order
 /// (the first letter of each row is drawn on the right).
@@ -11,11 +12,12 @@ const List<List<String>> arabicKeyboardRows = [
   ['ظ', 'ط', 'ذ', 'د', 'ز', 'ر', 'و', 'ى', 'ء'],
 ];
 
-/// Built-in Arabic keyboard. The system keyboard is never opened.
+/// Built-in Arabic keyboard with raised keycaps. The system keyboard is
+/// never opened.
 class ArabicKeyboard extends StatelessWidget {
   const ArabicKeyboard({super.key, required this.controller, this.palette});
 
-  static const double keyHeight = 44;
+  static const double keyHeight = 46;
 
   final CrosswordController controller;
   final CrosswordPalette? palette;
@@ -27,14 +29,15 @@ class ArabicKeyboard extends StatelessWidget {
     Widget letter(String l) => _Key(
           key: ValueKey('key-$l'),
           color: pal.key,
+          shadow: pal.keyShadow,
           onTap: () => controller.input(l),
           child: Text(
             l,
             textScaler: TextScaler.noScaling,
             style: TextStyle(
               fontSize: 20,
-              height: 1.1,
-              fontWeight: FontWeight.w600,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
               color: pal.letter,
             ),
           ),
@@ -43,7 +46,7 @@ class ArabicKeyboard extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(3, 4, 3, 4),
+        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -60,17 +63,23 @@ class ArabicKeyboard extends StatelessWidget {
                 _Key(
                   key: const ValueKey('key-toggle'),
                   color: pal.keyControl,
+                  shadow: pal.keyControlShadow,
                   semanticLabel: 'تبديل الاتجاه',
                   onTap: controller.toggleDirection,
-                  child: Icon(Icons.sync_alt, size: 20, color: pal.letter),
+                  child: Icon(Icons.sync_alt, size: 22, color: pal.letter),
                 ),
                 for (final l in arabicKeyboardRows[2]) letter(l),
                 _Key(
                   key: const ValueKey('key-backspace'),
                   color: pal.keyControl,
+                  shadow: pal.keyControlShadow,
                   semanticLabel: 'حذف',
                   onTap: controller.backspace,
-                  child: Icon(Icons.backspace_outlined, size: 20, color: pal.letter),
+                  child: Icon(
+                    Icons.backspace_outlined,
+                    size: 22,
+                    color: pal.letter,
+                  ),
                 ),
               ],
             ),
@@ -81,39 +90,69 @@ class ArabicKeyboard extends StatelessWidget {
   }
 }
 
-class _Key extends StatelessWidget {
+/// One keycap: a solid lower edge that the key sinks into while pressed.
+class _Key extends StatefulWidget {
   const _Key({
     super.key,
     required this.color,
+    required this.shadow,
     required this.onTap,
     required this.child,
     this.semanticLabel,
   });
 
   final Color color;
+  final Color shadow;
   final VoidCallback onTap;
   final Widget child;
   final String? semanticLabel;
 
   @override
+  State<_Key> createState() => _KeyState();
+}
+
+class _KeyState extends State<_Key> {
+  static const double _depth = 2;
+  bool _down = false;
+
+  void _set(bool down) {
+    if (_down != down) setState(() => _down = down);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Expanded(
       flex: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: Semantics(
-          label: semanticLabel,
-          button: true,
-          child: Material(
-            color: color,
-            borderRadius: BorderRadius.circular(6),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onTap,
-              child: SizedBox(
-                height: ArabicKeyboard.keyHeight,
-                child: Center(child: child),
+      child: Semantics(
+        label: widget.semanticLabel,
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => _set(true),
+          onTapUp: (_) => _set(false),
+          onTapCancel: () => _set(false),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            widget.onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2 + _depth),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 60),
+              height: ArabicKeyboard.keyHeight,
+              alignment: Alignment.center,
+              transform: Matrix4.translationValues(0, _down ? _depth : 0, 0),
+              decoration: BoxDecoration(
+                color: widget.color,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.shadow,
+                    offset: Offset(0, _down ? 0 : _depth),
+                  ),
+                ],
               ),
+              child: widget.child,
             ),
           ),
         ),
