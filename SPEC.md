@@ -96,7 +96,7 @@ push notifications, other languages, English UI.
 **Supabase (Postgres)**
 - `profiles(id uuid PK → auth.users, display_name text NOT NULL CHECK 3..20,
   total_daily_solved int NOT NULL DEFAULT 0, streak int NOT NULL DEFAULT 0, created_at)`
-- `daily_puzzles(day date PK, layout jsonb NOT NULL)` — blank grid + clues only, readable by all.
+- `daily_puzzles(day date PK, layout jsonb NOT NULL)` — client JSON: grid mask (`#` black, `.` empty), numbers, entries with `length` + clue, no answers; readable by all.
 - `daily_answers(day date PK → daily_puzzles, answers jsonb NOT NULL)` — **no client access** (RLS deny all).
 - `daily_starts(day, user_id, started_at, PK(day,user_id))` — server time when the player opened the daily puzzle.
 - `daily_scores(day, user_id, score int, time_ms int, helpers int, submitted_at,
