@@ -44,6 +44,11 @@ void main() {
     bad([entry(display: 'دمشق')], 'display');
     bad([entry(clue: 'مدينة بغداد')], 'reveals');
     bad([entry(clue: '')], 'clue length');
+    bad([entry(answer: 'شوقي', display: 'أحمد شوقي', clue: 'أمير الشعراء')], 'compound name');
+    expect(
+      bankProblems([entry(answer: 'شوقي', display: 'أحمد شوقي', clue: 'أحمد ___، أمير الشعراء')]),
+      isEmpty,
+    );
     bad([entry(category: 'x')], 'category');
     bad([entry(difficulty: 4)], 'difficulty');
   });

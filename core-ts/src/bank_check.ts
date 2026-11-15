@@ -5,6 +5,7 @@ import type { Entry } from './generator.ts';
 export const BANK_MIN_LEN = 3;
 export const BANK_MAX_LEN = 7;
 export const CATEGORIES = ['جغرافيا', 'تاريخ', 'علوم', 'دين', 'أدب', 'رياضة', 'فن', 'طبيعة', 'عام'];
+export const BLANK = '___';
 const PREFIXES = ['وال', 'بال', 'كال', 'فال', 'لل', 'ال', 'و', 'ب', 'ل', 'ك', 'ف'];
 const NOT_ARABIC = /[^ء-ٰٟ]+/u;
 
@@ -46,6 +47,8 @@ export function bankProblems(bank: readonly Entry[]): string[] {
     const clue = e.clue.trim();
     if (clue.length < 3 || clue.length > 60) out.push(`${tag}: clue length ${clue.length}`);
     if (clueLeaksAnswer(e.clue, e.answer)) out.push(`${tag}: clue reveals the answer`);
+    // Answer is one word of a longer name: the clue must show which one with a blank.
+    if (/\s/u.test(e.display.trim()) && !e.clue.includes(BLANK)) out.push(`${tag}: compound name needs ${BLANK} in the clue`);
     if (!CATEGORIES.includes(e.category)) out.push(`${tag}: unknown category «${e.category}»`);
     if (![1, 2, 3].includes(e.difficulty)) out.push(`${tag}: difficulty ${e.difficulty}`);
   }

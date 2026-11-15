@@ -26,6 +26,8 @@ test('the checker catches each kind of mistake', () => {
   bad([e({ display: 'دمشق' })], 'display');
   bad([e({ clue: 'مدينة بغداد' })], 'reveals');
   bad([e({ clue: '' })], 'clue length');
+  bad([e({ answer: 'شوقي', display: 'أحمد شوقي', clue: 'أمير الشعراء' })], 'compound name');
+  assert.deepEqual(bankProblems([e({ answer: 'شوقي', display: 'أحمد شوقي', clue: 'أحمد ___، أمير الشعراء' })]), []);
   bad([e({ category: 'x' })], 'category');
   bad([e({ difficulty: 4 })], 'difficulty');
 });

@@ -7,6 +7,7 @@ const int bankMaxLength = 7;
 const List<String> bankCategories = [
   'جغرافيا', 'تاريخ', 'علوم', 'دين', 'أدب', 'رياضة', 'فن', 'طبيعة', 'عام',
 ];
+const String bankBlank = '___';
 const List<String> _prefixes = [
   'وال', 'بال', 'كال', 'فال', 'لل', 'ال', 'و', 'ب', 'ل', 'ك', 'ف',
 ];
@@ -54,6 +55,10 @@ List<String> bankProblems(List<BankEntry> bank) {
     final clue = e.clue.trim();
     if (clue.length < 3 || clue.length > 60) out.add('$tag: clue length ${clue.length}');
     if (clueLeaksAnswer(e.clue, e.answer)) out.add('$tag: clue reveals the answer');
+    // Answer is one word of a longer name: the clue must show which one with a blank.
+    if (RegExp(r'\s').hasMatch(e.display.trim()) && !e.clue.contains(bankBlank)) {
+      out.add('$tag: compound name needs $bankBlank in the clue');
+    }
     if (!bankCategories.contains(e.category)) {
       out.add('$tag: unknown category «${e.category}»');
     }
