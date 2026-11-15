@@ -25,3 +25,7 @@
 12. Tapping "new puzzle" on a puzzle in progress asks for confirmation first.
 13. Background generation uses `compute` (isolate on phones, inline on web) instead of
     Isolate.run, which does not compile for web.
+14. Word bank rules (2026-11-15): answers are 3–7 letters after normalization, unique,
+    never revealed by their own clue; checked by core-ts/test/bank.test.ts and
+    test/bank_test.dart. The two 8-letter answers of batch 1 (ids 65, 94) were removed.
+    New category «فن» (music and arts).

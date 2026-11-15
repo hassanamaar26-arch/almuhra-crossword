@@ -35,9 +35,9 @@ void main() {
     }
   });
 
-  test('bank file: 119 entries with unique ids', () {
-    expect(bank.length, 119);
-    expect(bank.map((e) => e.id).toSet().length, 119);
+  test('bank file loads with unique ids', () {
+    expect(bank.length, greaterThanOrEqualTo(500));
+    expect(bank.map((e) => e.id).toSet().length, bank.length);
   });
 
   test('same seed → same puzzle; bank order does not matter', () {
