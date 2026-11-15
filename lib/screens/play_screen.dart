@@ -18,7 +18,8 @@ const Map<int, String> _sizeLabels = {7: 'سهل', 9: 'متوسط', 11: 'صعب'
 /// Grid on top, clue bar, then the Arabic keyboard. Nothing scrolls.
 ///
 /// [elapsed] adds a timer to the app bar; [onNewPuzzle] adds the
-/// "new puzzle" menu and the button of the victory dialog.
+/// "new puzzle" menu and the button of the victory dialog; [shareText]
+/// adds "copy result" to the victory dialog.
 class PlayScreen extends StatefulWidget {
   const PlayScreen({
     super.key,
@@ -26,12 +27,17 @@ class PlayScreen extends StatefulWidget {
     required this.title,
     this.elapsed,
     this.onNewPuzzle,
+    this.shareText,
   });
 
   final CrosswordController controller;
   final String title;
   final ValueListenable<Duration>? elapsed;
   final void Function(int size)? onNewPuzzle;
+
+  /// Builds the result text for the "copy result" button of the victory
+  /// dialog (daily puzzle).
+  final String Function()? shareText;
 
   @override
   State<PlayScreen> createState() => _PlayScreenState();
@@ -77,6 +83,7 @@ class _PlayScreenState extends State<PlayScreen> {
 
   void _showVictory() {
     final onNew = widget.onNewPuzzle;
+    final share = widget.shareText;
     final size = _c.puzzle.size;
     showDialog<void>(
       context: context,
@@ -84,6 +91,9 @@ class _PlayScreenState extends State<PlayScreen> {
         puzzle: _c.puzzle,
         helpersUsed: _c.state.helpersUsed,
         elapsed: widget.elapsed?.value,
+        onCopyResult: share == null
+            ? null
+            : () => Clipboard.setData(ClipboardData(text: share())),
         onNewPuzzle: onNew == null
             ? null
             : () {
@@ -164,6 +174,7 @@ class _PlayScreenState extends State<PlayScreen> {
     final elapsed = widget.elapsed;
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 0,
         title: Text(widget.title),
         actions: [
           if (elapsed != null)

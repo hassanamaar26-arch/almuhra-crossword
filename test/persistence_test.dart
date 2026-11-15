@@ -363,14 +363,24 @@ void main() {
     });
   });
 
-  test('SharedPrefsGameStorage reads back what it wrote', () async {
+  test('SharedPrefsStore reads back what it wrote, key by key', () async {
     SharedPreferences.setMockInitialValues({});
-    final storage = SharedPrefsGameStorage();
-    expect(await storage.read(), isNull);
-    await storage.write('{"v":1}');
-    expect(await storage.read(), '{"v":1}');
-    await storage.clear();
-    expect(await storage.read(), isNull);
+    final store = SharedPrefsStore();
+    expect(await store.read('a'), isNull);
+    await store.write('a', '{"v":1}');
+    await store.write('b', 'x');
+    expect(await store.read('a'), '{"v":1}');
+    expect((await store.keys()).toSet(), {'a', 'b'});
+    await store.remove('a');
+    expect(await store.read('a'), isNull);
+    expect(await store.read('b'), 'x');
+
+    final slot = SlotStorage(store, 'b');
+    expect(await slot.read(), 'x');
+    await slot.write('y');
+    expect(await store.read('b'), 'y');
+    await slot.clear();
+    expect(await store.keys(), isEmpty);
   });
 }
 

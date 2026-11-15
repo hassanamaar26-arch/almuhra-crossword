@@ -1,6 +1,9 @@
 // Quality rules for words/bank_v1.json. Mirror of core-ts/src/bank_check.ts.
 import 'package:almuhra_crossword/core/arabic/normalize.dart';
+import 'package:almuhra_crossword/core/generator/conflicts.dart';
 import 'package:almuhra_crossword/core/generator/word_bank.dart';
+
+export 'package:almuhra_crossword/core/generator/conflicts.dart' show clueLeaksAnswer;
 
 const int bankMinLength = 3;
 const int bankMaxLength = 7;
@@ -8,26 +11,6 @@ const List<String> bankCategories = [
   'جغرافيا', 'تاريخ', 'علوم', 'دين', 'أدب', 'رياضة', 'فن', 'طبيعة', 'عام',
 ];
 const String bankBlank = '___';
-const List<String> _prefixes = [
-  'وال', 'بال', 'كال', 'فال', 'لل', 'ال', 'و', 'ب', 'ل', 'ك', 'ف',
-];
-final RegExp _notArabic = RegExp(r'[^ء-ٰٟ]+');
-
-/// True when the clue gives the answer away.
-bool clueLeaksAnswer(String clue, String answer) {
-  final a = normalizeArabic(answer);
-  for (final raw in clue.split(_notArabic)) {
-    final token = normalizeArabic(raw);
-    if (token.isEmpty) continue;
-    if (token == a) return true;
-    if (toLetters(a).length >= 5 && token.contains(a)) return true;
-    for (final p in _prefixes) {
-      if (token.startsWith(p) && token.substring(p.length) == a) return true;
-    }
-  }
-  return false;
-}
-
 /// Every rule violation in the bank, as readable lines. Empty = clean.
 List<String> bankProblems(List<BankEntry> bank) {
   final out = <String>[];

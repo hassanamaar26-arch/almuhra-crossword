@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { generate, type Entry } from '../src/generator.ts';
 import { bankProblems, clueLeaksAnswer, BANK_MIN_LEN, BANK_MAX_LEN } from '../src/bank_check.ts';
 import { normalize, ALPHABET } from '../src/normalize.ts';
+import { clueLeaksAnswer as leaks } from '../src/conflicts.ts';
 
 const BANK: Entry[] = JSON.parse(
   readFileSync(new URL('../../words/bank_v1.json', import.meta.url), 'utf8'),
@@ -80,6 +81,11 @@ for (const size of [7, 9, 11]) {
       }
       const p = generate(BANK, { size, seed: `stress-${size}-${i}`, exclude });
       assert.equal(p.words.length, TARGET[size], `puzzle ${i} placed ${p.words.length} words`);
+      for (const a of p.words) {
+        for (const b of p.words) {
+          if (a.id !== b.id) assert.equal(leaks(a.clue, b.answer), false, `puzzle ${i}: «${a.clue}» names «${b.answer}»`);
+        }
+      }
       const ids = p.words.map((w) => w.id);
       for (const id of ids) {
         assert.ok(!exclude.has(id), `puzzle ${i} repeated word ${id}`);

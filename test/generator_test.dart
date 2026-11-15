@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:almuhra_crossword/core/generator/conflicts.dart';
 import 'package:almuhra_crossword/core/generator/generator.dart';
 import 'package:almuhra_crossword/core/generator/seed_rng.dart';
 import 'package:almuhra_crossword/core/generator/word_bank.dart';
@@ -66,6 +67,15 @@ void main() {
         expect(p.hasSolution, isTrue);
         expect(p.entries.length, greaterThanOrEqualTo(minWords[size]!));
         expect(g.wordIds.toSet().length, g.wordIds.length);
+        // No clue names another answer of the same puzzle.
+        for (final a in p.entries) {
+          for (final b in p.entries) {
+            if (!identical(a, b)) {
+              expect(clueLeaksAnswer(a.clue, b.answer!), isFalse,
+                  reason: 'seed $i: «${a.clue}» names «${b.answer}»');
+            }
+          }
+        }
         // Every white cell belongs to a word, and no stray runs exist:
         // the cells covered by entries are exactly the white cells.
         expect({for (final e in p.entries) ...e.cells}, p.whiteCells.toSet());

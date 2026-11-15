@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'core/generator/generator.dart';
 import 'core/generator/word_bank.dart';
-import 'screens/practice_screen.dart';
-import 'state/practice_session.dart';
+import 'screens/home_screen.dart';
+import 'state/app_controller.dart';
 import 'storage/game_storage.dart';
 
 void main() {
@@ -17,13 +17,13 @@ class CrosswordApp extends StatefulWidget {
   const CrosswordApp({
     super.key,
     this.bank,
-    this.storage,
+    this.store,
     this.generator,
     this.now,
   });
 
   final List<BankEntry>? bank;
-  final GameStorage? storage;
+  final KeyValueStore? store;
   final PuzzleGenerator? generator;
   final DateTime Function()? now;
 
@@ -33,7 +33,7 @@ class CrosswordApp extends StatefulWidget {
 
 class _CrosswordAppState extends State<CrosswordApp>
     with WidgetsBindingObserver {
-  PracticeSession? _session;
+  AppController? _app;
   Object? _error;
 
   @override
@@ -44,12 +44,11 @@ class _CrosswordAppState extends State<CrosswordApp>
   }
 
   Future<void> _init() async {
-    final PracticeSession session;
+    final AppController app;
     try {
-      final bank = widget.bank ?? await loadWordBank();
-      session = PracticeSession(
-        bank: bank,
-        storage: widget.storage ?? SharedPrefsGameStorage(),
+      app = AppController(
+        store: widget.store ?? SharedPrefsStore(),
+        bank: widget.bank ?? await loadWordBank(),
         generator: widget.generator,
         now: widget.now,
       );
@@ -58,44 +57,54 @@ class _CrosswordAppState extends State<CrosswordApp>
       return;
     }
     try {
-      await session.start();
+      await app.init();
     } catch (e) {
-      session.dispose();
+      app.dispose();
       if (mounted) setState(() => _error = e);
       return;
     }
     if (!mounted) {
-      session.dispose();
+      app.dispose();
       return;
     }
-    final ready = session;
-    setState(() => _session = ready);
+    final ready = app;
+    setState(() => _app = ready);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final session = _session;
-    if (session == null) return;
+    final app = _app;
+    if (app == null) return;
     if (state == AppLifecycleState.resumed) {
-      session.resume();
+      app.appResumed();
     } else {
-      session.pause();
+      app.appPaused();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _session?.dispose();
+    _app?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final session = _session;
+    final app = _app;
+    if (app == null) return _material(ThemeMode.system, _loading());
+    return ListenableBuilder(
+      listenable: app.settings,
+      builder: (context, _) =>
+          _material(app.settings.themeMode, HomeScreen(app: app)),
+    );
+  }
+
+  Widget _material(ThemeMode mode, Widget home) {
     return MaterialApp(
       title: 'الكلمات المتقاطعة (المُهرة)',
       debugShowCheckedModeBanner: false,
+      themeMode: mode,
       theme: ThemeData(colorSchemeSeed: const Color(0xFFB8811A)),
       darkTheme: ThemeData(
         colorSchemeSeed: const Color(0xFFB8811A),
@@ -103,21 +112,23 @@ class _CrosswordAppState extends State<CrosswordApp>
       ),
       builder: (context, child) =>
           Directionality(textDirection: TextDirection.rtl, child: child!),
-      home: session != null
-          ? PracticeScreen(session: session)
-          : Scaffold(
-              body: Center(
-                child: _error == null
-                    ? const CircularProgressIndicator()
-                    : Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'تعذّر تشغيل اللعبة.\n$_error',
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+      home: home,
+    );
+  }
+
+  Widget _loading() {
+    return Scaffold(
+      body: Center(
+        child: _error == null
+            ? const CircularProgressIndicator()
+            : Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'تعذّر تشغيل اللعبة.\n$_error',
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
+      ),
     );
   }
 }

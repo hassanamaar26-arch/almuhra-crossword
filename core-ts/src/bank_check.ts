@@ -1,29 +1,14 @@
 // Quality rules for words/bank_v1.json. Mirrored in test/bank_rules.dart.
 import { normalize, toLetters, ALPHABET } from './normalize.ts';
 import type { Entry } from './generator.ts';
+import { clueLeaksAnswer } from './conflicts.ts';
+
+export { clueLeaksAnswer };
 
 export const BANK_MIN_LEN = 3;
 export const BANK_MAX_LEN = 7;
 export const CATEGORIES = ['جغرافيا', 'تاريخ', 'علوم', 'دين', 'أدب', 'رياضة', 'فن', 'طبيعة', 'عام'];
 export const BLANK = '___';
-const PREFIXES = ['وال', 'بال', 'كال', 'فال', 'لل', 'ال', 'و', 'ب', 'ل', 'ك', 'ف'];
-const NOT_ARABIC = /[^ء-ٰٟ]+/u;
-
-/** True when the clue gives the answer away. */
-export function clueLeaksAnswer(clue: string, answer: string): boolean {
-  const a = normalize(answer);
-  for (const raw of clue.split(NOT_ARABIC)) {
-    const token = normalize(raw);
-    if (token.length === 0) continue;
-    if (token === a) return true;
-    if ([...a].length >= 5 && token.includes(a)) return true;
-    for (const p of PREFIXES) {
-      if (token.startsWith(p) && token.slice(p.length) === a) return true;
-    }
-  }
-  return false;
-}
-
 /** Every rule violation in the bank, as readable lines. Empty = clean. */
 export function bankProblems(bank: readonly Entry[]): string[] {
   const out: string[] = [];

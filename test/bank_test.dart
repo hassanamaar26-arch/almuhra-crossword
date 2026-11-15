@@ -105,6 +105,14 @@ void main() {
         final g = generatePuzzle(bank, size: size, seed: 'stress-$size-$i', exclude: exclude);
         final p = Puzzle.fromJson(g.json); // re-validates every crossing
         expect(p.entries.length, targets[size], reason: 'puzzle $i');
+        for (final a in p.entries) {
+          for (final b in p.entries) {
+            if (!identical(a, b)) {
+              expect(clueLeaksAnswer(a.clue, b.answer!), isFalse,
+                  reason: 'puzzle $i: «${a.clue}» names «${b.answer}»');
+            }
+          }
+        }
         expect(g.wordIds.toSet().intersection(exclude), isEmpty, reason: 'puzzle $i');
         recent = [g.wordIds, ...recent].take(5).toList();
         final flat = [for (final ids in recent) ...ids];

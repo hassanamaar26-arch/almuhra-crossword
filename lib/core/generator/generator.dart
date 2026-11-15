@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/puzzle.dart' show Direction, Pos;
 import '../arabic/normalize.dart';
+import 'conflicts.dart';
 import 'seed_rng.dart';
 import 'word_bank.dart';
 
@@ -59,10 +60,12 @@ GeneratedPuzzle generatePuzzle(
   ].where((c) => c.letters.length <= size).toList();
   if (candidates.isEmpty) throw const GeneratorError('no usable words');
 
+  final conflicts = buildConflicts(bank);
   _Board? best;
   var bestScore = -1;
   for (var k = 0; k < _attempts; k++) {
-    final board = _attempt(List.of(candidates), size, target, '$seed#$k');
+    final board =
+        _attempt(List.of(candidates), size, target, '$seed#$k', conflicts);
     final score = board.placed.length * 1000 + board.filled;
     if (score > bestScore) {
       best = board;
@@ -131,12 +134,16 @@ class _Placed {
 }
 
 class _Board {
-  _Board(this.size)
+  _Board(this.size, this.conflicts)
       : grid = List.generate(size, (_) => List<String?>.filled(size, null)),
         _usedAcross = List.generate(size, (_) => List<bool>.filled(size, false)),
         _usedDown = List.generate(size, (_) => List<bool>.filled(size, false));
 
   final int size;
+  final Map<int, Set<int>> conflicts;
+
+  /// Ids whose clue names a placed answer, or whose answer a placed clue names.
+  final Set<int> blocked = {};
   final List<List<String?>> grid;
   final List<List<bool>> _usedAcross;
   final List<List<bool>> _usedDown;
@@ -190,13 +197,20 @@ class _Board {
       used[r][c] = true;
     }
     usedAnswers.add(cand.answer);
+    blocked.addAll(conflicts[cand.entry.id] ?? const <int>{});
     placed.add(_Placed(cand, r0, c0, dir));
   }
 }
 
-_Board _attempt(List<_Cand> pool, int size, int target, String subSeed) {
+_Board _attempt(
+  List<_Cand> pool,
+  int size,
+  int target,
+  String subSeed,
+  Map<int, Set<int>> conflicts,
+) {
   SeedRng(subSeed).shuffle(pool);
-  final board = _Board(size);
+  final board = _Board(size, conflicts);
 
   // Seed word: first long-enough word in shuffled order, else the longest.
   final minFirst = _minFirstLength[size]!;
@@ -220,6 +234,7 @@ _Board _attempt(List<_Cand> pool, int size, int target, String subSeed) {
     for (final cand in pool) {
       if (board.placed.length >= target) break;
       if (board.usedAnswers.contains(cand.answer)) continue;
+      if (board.blocked.contains(cand.entry.id)) continue;
       var best = 0;
       var bestRow = 0;
       var bestCol = 0;

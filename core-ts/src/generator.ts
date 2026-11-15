@@ -7,6 +7,7 @@
 
 import { normalize, isValidAnswer } from './normalize.ts';
 import { Rng } from './rng.ts';
+import { buildConflicts } from './conflicts.ts';
 
 export interface Entry {
   id: number;
@@ -56,8 +57,9 @@ const ATTEMPTS = 40;
 export function generate(bank: readonly Entry[], opts: Options): Puzzle {
   let best: Puzzle | null = null;
   let bestScore = -1;
+  const conflicts = buildConflicts(bank);
   for (let k = 0; k < ATTEMPTS; k++) {
-    const p = attempt(bank, opts, `${opts.seed}#${k}`);
+    const p = attempt(bank, opts, `${opts.seed}#${k}`, conflicts);
     const filled = p.grid.flat().filter((x) => x !== null).length;
     const score = p.words.length * 1000 + filled;
     if (score > bestScore) { best = p; bestScore = score; }
@@ -66,7 +68,12 @@ export function generate(bank: readonly Entry[], opts: Options): Puzzle {
   return best!;
 }
 
-function attempt(bank: readonly Entry[], opts: Options, subSeed: string): Puzzle {
+function attempt(
+  bank: readonly Entry[],
+  opts: Options,
+  subSeed: string,
+  conflicts: ReadonlyMap<number, ReadonlySet<number>>,
+): Puzzle {
   const { size, seed } = opts;
   if (!(size in TARGET)) throw new GeneratorError(`unsupported size ${size}`);
   if (bank.length === 0) throw new GeneratorError('empty bank');
@@ -89,6 +96,8 @@ function attempt(bank: readonly Entry[], opts: Options, subSeed: string): Puzzle
   const byLetter = new Map<string, [number, number][]>();
   const placed: Omit<Placed, 'number'>[] = [];
   const usedAnswers = new Set<string>();
+  // Ids whose clue names a placed answer, or whose answer a placed clue names.
+  const blocked = new Set<number>();
 
   const empty = (r: number, c: number) =>
     r < 0 || r >= size || c < 0 || c >= size || grid[r][c] === null;
@@ -128,6 +137,7 @@ function attempt(bank: readonly Entry[], opts: Options, subSeed: string): Puzzle
     });
     const answer = cand.letters.join('');
     usedAnswers.add(answer);
+    for (const id of conflicts.get(cand.id) ?? []) blocked.add(id);
     placed.push({ id: cand.id, answer, display: cand.e.display, clue: cand.e.clue, row: r0, col: c0, dir });
   }
 
@@ -143,6 +153,7 @@ function attempt(bank: readonly Entry[], opts: Options, subSeed: string): Puzzle
     for (const cand of pool) {
       if (placed.length >= target) break;
       if (usedAnswers.has(cand.letters.join(''))) continue;
+      if (blocked.has(cand.id)) continue;
       let best = 0, br = 0, bc = 0, bd: Dir = 'across';
       cand.letters.forEach((ch, k) => {
         for (const [r, c] of byLetter.get(ch) ?? []) {
