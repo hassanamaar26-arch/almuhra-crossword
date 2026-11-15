@@ -1,1 +1,6 @@
 include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # We stay on package:flutter/material.dart on purpose (no extra UI dependency).
+    deprecated_member_use: ignore

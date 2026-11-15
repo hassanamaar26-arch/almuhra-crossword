@@ -21,6 +21,8 @@ class CrosswordPalette {
     required this.letterWrong,
     required this.letterRevealed,
     required this.number,
+    required this.key,
+    required this.keyControl,
   });
 
   static const light = CrosswordPalette(
@@ -36,6 +38,8 @@ class CrosswordPalette {
     letterWrong: Color(0xFFA1261D),
     letterRevealed: Color(0xFF1F5A8A),
     number: Color(0xFF5B666C),
+    key: Color(0xFFE7ECEF),
+    keyControl: Color(0xFFCFD8DC),
   );
 
   static const dark = CrosswordPalette(
@@ -51,6 +55,8 @@ class CrosswordPalette {
     letterWrong: Color(0xFFF2A39C),
     letterRevealed: Color(0xFF9CC7EC),
     number: Color(0xFFA9B4BA),
+    key: Color(0xFF37464E),
+    keyControl: Color(0xFF2A363C),
   );
 
   static CrosswordPalette of(Brightness b) =>
@@ -58,6 +64,9 @@ class CrosswordPalette {
 
   final Color block, cell, active, word, correct, wrong, revealed;
   final Color letter, letterCorrect, letterWrong, letterRevealed, number;
+
+  /// Keyboard: letter keys and control keys (delete, direction).
+  final Color key, keyControl;
 }
 
 /// The crossword board. Always laid out RTL: logical column 0 is drawn on

@@ -231,6 +231,37 @@ void main() {
     });
   });
 
+  group('entries', () {
+    test('selectEntry goes to the first empty cell, or the start when complete', () {
+      final arbil = c.puzzle.entries.firstWhere((e) => e.number == 5);
+      c.selectCell(const Pos(3, 1));
+      c.input('ا');
+      c.selectEntry(c.puzzle.entries.first);
+      c.selectEntry(arbil);
+      expect(c.state.cursor, const Pos(3, 2));
+      expect(c.state.dir, Direction.across);
+      final ward = c.puzzle.entries.first;
+      c.selectEntry(ward);
+      c..input('و')..input('ر')..input('د');
+      expect(c.isComplete(ward), isTrue);
+      expect(c.isComplete(arbil), isFalse);
+      c.selectEntry(ward);
+      expect(c.state.cursor, const Pos(1, 4));
+    });
+    test('stepEntry cycles forward and backward', () {
+      c.stepEntry();
+      expect(c.currentEntry!.number, 5);
+      c.stepEntry(forward: false);
+      c.stepEntry(forward: false);
+      expect(c.currentEntry!.number, 6);
+      expect(c.state.dir, Direction.down);
+    });
+    test('toggleDirection flips when both words exist', () {
+      c.toggleDirection();
+      expect(c.state.dir, Direction.down);
+    });
+  });
+
   test('listeners are notified on change', () {
     var n = 0;
     c.addListener(() => n++);

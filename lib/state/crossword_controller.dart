@@ -155,9 +155,22 @@ class CrosswordController extends ChangeNotifier {
     final entries = puzzle.entries;
     final cur = currentEntry;
     final i = cur == null ? 0 : entries.indexOf(cur);
-    final e = entries[(i + (forward ? 1 : -1) + entries.length) % entries.length];
-    _set(_state.copyWith(cursor: _firstEmpty(e, _state.cells) ?? e.start, dir: e.dir));
+    selectEntry(entries[(i + (forward ? 1 : -1) + entries.length) % entries.length]);
   }
+
+  /// Go to a word: its first empty cell, or its start when it is complete.
+  void selectEntry(Entry e) {
+    _set(_state.copyWith(
+      cursor: _firstEmpty(e, _state.cells) ?? e.start,
+      dir: e.dir,
+    ));
+  }
+
+  /// Switch between the across and down word of the current cell.
+  void toggleDirection() => selectCell(_state.cursor);
+
+  /// True when every cell of the word has a letter (right or wrong).
+  bool isComplete(Entry e) => _firstEmpty(e, _state.cells) == null;
 
   // --------------------------------------------------------------- helpers
 
