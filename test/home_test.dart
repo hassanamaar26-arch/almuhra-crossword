@@ -374,6 +374,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(mode(), ThemeMode.dark);
+    await tester.pumpAndSettle(); // the theme change is animated
     expect(Theme.of(tester.element(find.text('وضع التدريب'))).brightness,
         Brightness.dark);
 
