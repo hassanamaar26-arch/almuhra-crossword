@@ -17,6 +17,8 @@ jobs:
 
   flutter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -34,8 +36,19 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
-      - run: flutter build apk --debug
+      - run: flutter build apk --release
+      - name: Name the APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk almuhra-crossword.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: almuhra-crossword-apk
+          path: almuhra-crossword.apk
+      - name: Publish to Releases
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "نسخة تجريبية ${{ github.run_number }}"
+          body: "نسخة تجريبية تُبنى تلقائياً من آخر تحديث. نزّل الملف almuhra-crossword.apk ونصّبه."
+          files: almuhra-crossword.apk
+          make_latest: true
